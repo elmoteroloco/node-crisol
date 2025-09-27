@@ -45,7 +45,33 @@ const verifyAdminToken = async (req, res, next) => {
 }
 
 app.get("/", (req, res) => {
-    res.send("¡El servidor de Crisol está funcionando!")
+    res.send("Crisol-server está en línea.")
+})
+
+app.get("/products", async (req, res) => {
+    try {
+        const snapshot = await db.collection("productos").get()
+        const products = []
+        snapshot.forEach((doc) => {
+            products.push({ id: doc.id, ...doc.data() })
+        })
+        res.status(200).json(products)
+    } catch (error) {
+        console.error("Error al obtener productos:", error)
+        res.status(500).json({ message: "Error interno del servidor al obtener productos." })
+    }
+})
+
+app.get("/categories", async (req, res) => {
+    try {
+        const snapshot = await db.collection("categorias").get()
+        const categories = []
+        snapshot.forEach((doc) => categories.push(doc.data().nombre))
+        res.status(200).json(categories)
+    } catch (error) {
+        console.error("Error al obtener categorías:", error)
+        res.status(500).json({ message: "Error interno del servidor al obtener categorías." })
+    }
 })
 
 app.post("/products", verifyAdminToken, async (req, res) => {
