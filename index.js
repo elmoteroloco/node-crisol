@@ -20,19 +20,7 @@ const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
-
-const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin || origin.endsWith(".vercel.app")) {
-            callback(null, true)
-        } else {
-            callback(new Error("Not allowed by CORS"))
-        }
-    },
-    credentials: true,
-}
-
-app.use(cors(corsOptions))
+app.use(cors()) // Volvemos al CORS simple y permisivo que tenías.
 
 const verifyAdminToken = async (req, res, next) => {
     const authHeader = req.headers.authorization
