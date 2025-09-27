@@ -1,12 +1,8 @@
-import express from "express"
-import admin from "firebase-admin"
-import dotenv from "dotenv"
-import cors from "cors"
-import { fileURLToPath } from "url"
-import path from "path"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const express = require("express")
+const admin = require("firebase-admin")
+const dotenv = require("dotenv")
+const cors = require("cors")
+const path = require("path")
 
 dotenv.config({ path: path.resolve(__dirname, ".env") })
 
@@ -20,7 +16,22 @@ const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
-app.use(cors({ origin: true }))
+
+// Configuración de CORS más específica
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir peticiones sin 'origin' (como las de Postman o apps móviles)
+        // y peticiones desde el dominio de Vercel.
+        if (!origin || origin.endsWith(".vercel.app")) {
+            callback(null, true)
+        } else {
+            callback(new Error("Not allowed by CORS"))
+        }
+    },
+    credentials: true,
+}
+
+app.use(cors(corsOptions))
 
 const verifyAdminToken = async (req, res, next) => {
     const authHeader = req.headers.authorization
