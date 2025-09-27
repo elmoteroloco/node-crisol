@@ -10,16 +10,9 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, ".env") })
 
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-    const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    })
-} else {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-    })
-}
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+})
 
 const db = admin.firestore()
 const app = express()
