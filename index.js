@@ -1,0 +1,197 @@
+import express from "express"
+import admin from "firebase-admin"
+import dotenv from "dotenv"
+import cors from "cors"
+import { fileURLToPath } from "url"
+import path from "path"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+dotenv.config({ path: path.resolve(__dirname, ".env") })
+
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    })
+} else {
+    admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+    })
+}
+
+const db = admin.firestore()
+const app = express()
+const PORT = process.env.PORT || 3000
+
+app.use(express.json())
+app.use(cors({ origin: true }))
+
+const verifyAdminToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).send("No autorizado: Token no proporcionado.")
+    }
+
+    const idToken = authHeader.split("Bearer ")[1]
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken)
+        if (decodedToken.admin === true) {
+            req.user = decodedToken
+            next()
+        } else {
+            res.status(403).send("Acceso denegado: No tienes permisos de administrador.")
+        }
+    } catch (error) {
+        console.error("Error al verificar token:", error)
+        res.status(401).send("No autorizado: Token inválido o expirado.")
+    }
+}
+
+app.get("/", (req, res) => {
+    res.send("¡El servidor de Crisol está funcionando!")
+})
+
+app.post("/products", verifyAdminToken, async (req, res) => {
+    try {
+        if (process.env.SIMULATION_MODE === "true" && req.user.superAdmin !== true) {
+            return res.status(201).send({
+                simulated: true,
+                message: "Modo simulación: El producto se habría agregado con éxito.",
+                data: req.body,
+            })
+        }
+        const newProduct = req.body
+        const docRef = await db.collection("productos").add(newProduct)
+        res.status(201).send({ id: docRef.id, ...newProduct })
+    } catch (error) {
+        console.error("Error al agregar producto:", error)
+        res.status(500).send("Error interno del servidor al agregar producto.")
+    }
+})
+
+app.put("/products/:id", verifyAdminToken, async (req, res) => {
+    try {
+        if (process.env.SIMULATION_MODE === "true" && req.user.superAdmin !== true) {
+            return res.status(200).send({
+                simulated: true,
+                message: `Modo simulación: El producto con ID ${req.params.id} se habría actualizado.`,
+                data: req.body,
+            })
+        }
+        const { id } = req.params
+        const updatedProduct = req.body
+        await db.collection("productos").doc(id).update(updatedProduct)
+        res.status(200).send({ id, ...updatedProduct })
+    } catch (error) {
+        console.error("Error al actualizar producto:", error)
+        res.status(500).send("Error interno del servidor al actualizar producto.")
+    }
+})
+
+app.delete("/products/:id", verifyAdminToken, async (req, res) => {
+    try {
+        if (process.env.SIMULATION_MODE === "true" && req.user.superAdmin !== true) {
+            return res.status(200).send({
+                simulated: true,
+                message: `Modo simulación: Producto con ID ${req.params.id} se habría eliminado.`,
+            })
+        }
+        const { id } = req.params
+        await db.collection("productos").doc(id).delete()
+        res.status(200).send(`Producto con ID ${id} eliminado.`)
+    } catch (error) {
+        console.error("Error al eliminar producto:", error)
+        res.status(500).send("Error interno del servidor al eliminar producto.")
+    }
+})
+
+app.post("/categories", verifyAdminToken, async (req, res) => {
+    try {
+        const { nombre } = req.body
+        if (!nombre) {
+            return res.status(400).send("El nombre de la categoría es obligatorio.")
+        }
+        const existingCategory = await db.collection("categorias").where("nombre", "==", nombre).get()
+        if (!existingCategory.empty) {
+            return res.status(409).send("La categoría ya existe.")
+        }
+
+        if (process.env.SIMULATION_MODE === "true" && req.user.superAdmin !== true) {
+            return res.status(201).send({
+                simulated: true,
+                message: "Modo simulación: La categoría se habría agregado con éxito.",
+                data: { nombre },
+            })
+        }
+
+        const docRef = await db.collection("categorias").add({ nombre })
+        res.status(201).send({ id: docRef.id, nombre })
+    } catch (error) {
+        console.error("Error al agregar categoría:", error)
+        res.status(500).send("Error interno del servidor al agregar categoría.")
+    }
+})
+
+app.delete("/categories/:name", verifyAdminToken, async (req, res) => {
+    try {
+        const { name } = req.params
+        const q = db.collection("categorias").where("nombre", "==", name)
+        const querySnapshot = await q.get()
+
+        if (querySnapshot.empty) {
+            return res.status(404).send(`No se encontró la categoría "${name}" para eliminar.`)
+        }
+
+        if (process.env.SIMULATION_MODE === "true" && req.user.superAdmin !== true) {
+            return res.status(200).send({
+                simulated: true,
+                message: `Modo simulación: Categoría "${name}" se habría eliminado.`,
+            })
+        }
+
+        const batch = db.batch()
+        querySnapshot.forEach((doc) => batch.delete(doc.ref))
+        await batch.commit()
+
+        res.status(200).send(`Categoría "${name}" eliminada.`)
+    } catch (error) {
+        console.error("Error al eliminar categoría:", error)
+        res.status(500).send("Error interno del servidor al eliminar categoría.")
+    }
+})
+
+// --- RUTAS TEMPORALES PARA ASIGNAR ROLES ---
+// ¡OJO! Estas rutas son para desarrollo. Deberías protegerlas o eliminarlas en producción.
+app.post("/set-role/:uid", async (req, res) => {
+    try {
+        const { uid } = req.params
+        await admin.auth().setCustomUserClaims(uid, { admin: true })
+        res.status(200).send(
+            `¡Éxito! El usuario ${uid} ahora es administrador. Por favor, volvé a iniciar sesión en la app para que los cambios tomen efecto.`,
+        )
+    } catch (error) {
+        console.error("Error al establecer admin claim:", error)
+        res.status(500).send("Error al establecer el rol de administrador.")
+    }
+})
+
+app.post("/set-super-admin/:uid", async (req, res) => {
+    try {
+        const { uid } = req.params
+        await admin.auth().setCustomUserClaims(uid, { admin: true, superAdmin: true })
+        res.status(200).send(
+            `¡Éxito! El usuario ${uid} ahora es SUPER-administrador. Por favor, volvé a iniciar sesión en la app para que los cambios tomen efecto.`,
+        )
+    } catch (error) {
+        console.error("Error al establecer super-admin claim:", error)
+        res.status(500).send("Error al establecer el rol de super-administrador.")
+    }
+})
+// -------------------------------------------------
+
+app.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`)
+})
