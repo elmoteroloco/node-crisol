@@ -12,6 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env") })
 
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
+    projectId: process.env.FIREBASE_PROJECT_ID,
 })
 
 const db = admin.firestore()
