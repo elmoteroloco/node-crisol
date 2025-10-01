@@ -10,19 +10,18 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, ".env") })
 
+// Lógica de inicialización de Firebase mejorada y corregida
 const firebaseCredentials = process.env.FIREBASE_CREDENTIALS
 if (firebaseCredentials) {
-    // Credenciales desde la variable de entorno (Producción)
+    // Producción: Usar credenciales desde la variable de entorno
     const serviceAccount = JSON.parse(firebaseCredentials)
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID,
     })
 } else {
-    // Credenciales por defecto -GOOGLE_APPLICATION_CREDENTIALS- (Desarrollo)
+    // Desarrollo: Usar credenciales por defecto (GOOGLE_APPLICATION_CREDENTIALS)
     admin.initializeApp({
         credential: admin.credential.applicationDefault(),
-        projectId: process.env.FIREBASE_PROJECT_ID,
     })
 }
 
