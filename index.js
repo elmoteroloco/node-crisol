@@ -10,17 +10,28 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, ".env") })
 
-admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId: process.env.FIREBASE_PROJECT_ID,
-})
+const firebaseCredentials = process.env.FIREBASE_CREDENTIALS
+if (firebaseCredentials) {
+    // Credenciales desde la variable de entorno (Producción)
+    const serviceAccount = JSON.parse(firebaseCredentials)
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+    })
+} else {
+    // Credenciales por defecto -GOOGLE_APPLICATION_CREDENTIALS- (Desarrollo)
+    admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+    })
+}
 
 const db = admin.firestore()
 const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
-app.use(cors()) // Volvemos al CORS simple y permisivo que tenías.
+app.use(cors())
 
 const verifyAdminToken = async (req, res, next) => {
     const authHeader = req.headers.authorization
@@ -182,35 +193,6 @@ app.delete("/categories/:name", verifyAdminToken, async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor al eliminar categoría." })
     }
 })
-
-// --- RUTAS TEMPORALES PARA ASIGNAR ROLES ---
-// ¡OJO! Estas rutas son para desarrollo. Deberías protegerlas o eliminarlas en producción.
-app.post("/set-role/:uid", async (req, res) => {
-    try {
-        const { uid } = req.params
-        await admin.auth().setCustomUserClaims(uid, { admin: true })
-        res.status(200).json({
-            message: `¡Éxito! El usuario ${uid} ahora es administrador. Por favor, volvé a iniciar sesión en la app para que los cambios tomen efecto.`,
-        })
-    } catch (error) {
-        console.error("Error al establecer admin claim:", error)
-        res.status(500).json({ message: "Error al establecer el rol de administrador." })
-    }
-})
-
-app.post("/set-super-admin/:uid", async (req, res) => {
-    try {
-        const { uid } = req.params
-        await admin.auth().setCustomUserClaims(uid, { admin: true, superAdmin: true })
-        res.status(200).json({
-            message: `¡Éxito! El usuario ${uid} ahora es SUPER-administrador. Por favor, volvé a iniciar sesión en la app para que los cambios tomen efecto.`,
-        })
-    } catch (error) {
-        console.error("Error al establecer super-admin claim:", error)
-        res.status(500).json({ message: "Error al establecer el rol de super-administrador." })
-    }
-})
-// -------------------------------------------------
 
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`)
