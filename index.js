@@ -30,7 +30,24 @@ const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
-app.use(cors())
+
+// --- Configuración de CORS mejorada para producción ---
+const whitelist = ["http://localhost:5173", "https://tpf-crisol.vercel.app"]
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir peticiones sin 'origin' (como las de Postman o apps mobile) y las de la whitelist
+        if (!origin || whitelist.some((domain) => origin.startsWith(domain.replace(/:\d+$/, "")))) {
+            callback(null, true)
+        } else {
+            callback(new Error("No permitido por CORS"))
+        }
+    },
+    credentials: true,
+}
+// Usamos una expresión regular para permitir cualquier subdominio de vercel.app
+corsOptions.origin = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.vercel\.app$/]
+app.use(cors(corsOptions))
+// ----------------------------------------------------
 
 const verifyAdminToken = async (req, res, next) => {
     const authHeader = req.headers.authorization
