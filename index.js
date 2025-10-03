@@ -45,7 +45,7 @@ const corsOptions = {
     credentials: true,
 }
 // Usamos una expresión regular para permitir cualquier subdominio de vercel.app
-corsOptions.origin = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.vercel\.app$/]
+corsOptions.origin = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
