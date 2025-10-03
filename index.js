@@ -55,10 +55,10 @@ const corsOptions = {
     credentials: true,
 }
 
-// Habilitar pre-flight para todas las rutas
-app.options("*", cors())
+// 1. Habilitar CORS para todas las peticiones pre-flight (OPTIONS)
+app.use(cors())
 
-// Luego, aplicar la configuración de CORS más específica para las demás peticiones
+// 2. Aplicar nuestra lógica de CORS específica para el resto de las peticiones
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
@@ -125,7 +125,7 @@ app.post("/products", verifyAdminToken, async (req, res) => {
         }
         const newProduct = req.body
         const docRef = await db.collection("productos").add(newProduct)
-        res.status(201).json({ id: docRef.id, ...newProduct })
+        res.status(201.json({ id: docRef.id, ...newProduct })
     } catch (error) {
         console.error("Error al agregar producto:", error)
         res.status(500).json({ message: "Error interno del servidor al agregar producto." })
