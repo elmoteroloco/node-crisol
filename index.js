@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, ".env") })
 
-// Lógica de inicialización de Firebase mejorada y corregida
+// Inicialización de Firebase DUAL
 const firebaseCredentials = process.env.FIREBASE_CREDENTIALS
 if (firebaseCredentials) {
     // Producción: Usar credenciales desde la variable de entorno
@@ -31,11 +31,11 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
-// --- Configuración de CORS mejorada para producción ---
+// --- Configuración de CORS para producción ---
 const whitelist = ["http://localhost:5173", "https://tpf-crisol.vercel.app"]
 const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir peticiones sin 'origin' (como las de Postman o apps mobile) y las de la whitelist
+        // Permite peticiones sin 'origin' (para Postman o apps mobile) y las de la whitelist
         if (!origin || whitelist.some((domain) => origin.startsWith(domain.replace(/:\d+$/, "")))) {
             callback(null, true)
         } else {
@@ -44,7 +44,7 @@ const corsOptions = {
     },
     credentials: true,
 }
-// Usamos una expresión regular para permitir cualquier subdominio de vercel.app
+// Expresión Regular: va a permitir cualquier subdominio de Netlify
 corsOptions.origin = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
 app.use(cors(corsOptions))
 // ----------------------------------------------------
