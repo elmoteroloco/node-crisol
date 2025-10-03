@@ -31,10 +31,20 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
-// --- Configuración de CORS ---
+// --- Configuración de CORS con función dinámica ---
+const allowedOrigins = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
 const corsOptions = {
-    // Usamos una expresión regular para permitir localhost y cualquier subdominio de netlify.app
-    origin: [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/],
+    origin: (origin, callback) => {
+        // Permitir peticiones sin 'origin' (como Postman o apps mobile)
+        if (!origin) return callback(null, true)
+
+        // Chequear si el 'origin' de la petición coincide con nuestros orígenes permitidos
+        if (allowedOrigins.some((regex) => regex.test(origin))) {
+            callback(null, true)
+        } else {
+            callback(new Error("No permitido por CORS"))
+        }
+    },
     credentials: true,
 }
 app.use(cors(corsOptions))
