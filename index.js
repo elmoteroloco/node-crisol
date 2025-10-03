@@ -55,10 +55,7 @@ const corsOptions = {
     credentials: true,
 }
 
-// 1. Habilitar CORS para todas las peticiones pre-flight (OPTIONS)
-app.use(cors())
-
-// 2. Aplicar nuestra lógica de CORS específica para el resto de las peticiones
+// El middleware de CORS se aplica a todas las rutas y métodos, incluyendo OPTIONS (pre-flight)
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
