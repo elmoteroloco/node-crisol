@@ -35,14 +35,21 @@ app.use(express.json())
 const allowedOrigins = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
 const corsOptions = {
     origin: (origin, callback) => {
+        // --- DEBUGGING ---
+        console.log("--------------------------")
+        console.log("CORS check - Origin:", origin)
+        // -----------------
+
         // Permitir peticiones sin 'origin' (como Postman o apps mobile)
         if (!origin) return callback(null, true)
 
         // Chequear si el 'origin' de la petición coincide con nuestros orígenes permitidos
         if (allowedOrigins.some((regex) => regex.test(origin))) {
+            console.log("CORS check - RESULT: ✅ PERMITIDO")
             callback(null, true)
         } else {
-            callback(new Error("No permitido por CORS"))
+            console.log("CORS check - RESULT: ❌ DENEGADO")
+            callback(new Error(`No permitido por CORS. Origen: ${origin}`))
         }
     },
     credentials: true,
