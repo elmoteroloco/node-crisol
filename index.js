@@ -31,21 +31,12 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
-// --- Configuración de CORS para producción ---
-const whitelist = ["http://localhost:5173", "https://tpf-crisol.vercel.app"]
+// --- Configuración de CORS ---
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Permite peticiones sin 'origin' (para Postman o apps mobile) y las de la whitelist
-        if (!origin || whitelist.some((domain) => origin.startsWith(domain.replace(/:\d+$/, "")))) {
-            callback(null, true)
-        } else {
-            callback(new Error("No permitido por CORS"))
-        }
-    },
+    // Usamos una expresión regular para permitir localhost y cualquier subdominio de netlify.app
+    origin: [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/],
     credentials: true,
 }
-// Expresión Regular: va a permitir cualquier subdominio de Netlify
-corsOptions.origin = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
