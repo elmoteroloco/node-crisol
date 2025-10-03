@@ -54,6 +54,8 @@ const corsOptions = {
     },
     credentials: true,
 }
+// Habilitar pre-flight para todas las rutas
+app.options("*", cors(corsOptions))
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
