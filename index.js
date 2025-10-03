@@ -55,7 +55,10 @@ const corsOptions = {
     credentials: true,
 }
 
-// El middleware de CORS se aplica a todas las rutas y métodos, incluyendo OPTIONS (pre-flight)
+// 1. Habilitar y responder a TODAS las peticiones de pre-vuelo (OPTIONS)
+app.options("*", cors())
+
+// 2. Luego, aplicar nuestra configuración de CORS más específica para las demás peticiones
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
@@ -122,7 +125,7 @@ app.post("/products", verifyAdminToken, async (req, res) => {
         }
         const newProduct = req.body
         const docRef = await db.collection("productos").add(newProduct)
-        res.status(201.json({ id: docRef.id, ...newProduct })
+        res.status(201).json({ id: docRef.id, ...newProduct })
     } catch (error) {
         console.error("Error al agregar producto:", error)
         res.status(500).json({ message: "Error interno del servidor al agregar producto." })
