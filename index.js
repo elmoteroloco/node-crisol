@@ -28,20 +28,23 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
-// --- Configuración de CORS con función dinámica ---
-const allowedOrigins = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/, /^https:\/\/.*\.vercel\.app$/]
+// --- Configuración de CORS ---
+// Esta es la configuración correcta y simplificada.
+// El middleware `cors` con una función `origin` maneja
+// automáticamente las peticiones de pre-vuelo (OPTIONS).
+const allowedOrigins = [
+    /^http:\/\/localhost:\d{4}$/,
+    /^https:\/\/.*\.netlify\.app$/,
+    /^https:\/\/.*\.vercel\.app$/,
+    /^https:\/\/crisol-server\.onrender\.com$/,
+]
+
 const corsOptions = {
     origin: (origin, callback) => {
-        // --- DEBUGGING ---
         console.log("--------------------------")
         console.log("CORS check - Origin:", origin)
-        // -----------------
 
-        // Permitir peticiones sin 'origin' (como Postman o apps mobile)
-        if (!origin) return callback(null, true)
-
-        // Chequear si el 'origin' de la petición coincide con nuestros orígenes permitidos
-        if (allowedOrigins.some((regex) => regex.test(origin))) {
+        if (!origin || allowedOrigins.some((regex) => regex.test(origin))) {
             console.log("CORS check - RESULT: ✅ PERMITIDO")
             callback(null, true)
         } else {
@@ -52,10 +55,6 @@ const corsOptions = {
     credentials: true,
 }
 
-// 1. Habilitar y responder a TODAS las peticiones de pre-vuelo (OPTIONS)
-app.options("*", cors())
-
-// 2. Luego, aplicar nuestra configuración de CORS más específica para las demás peticiones
 app.use(cors(corsOptions))
 // ----------------------------------------------------
 
