@@ -32,7 +32,12 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 
 // --- Configuración de CORS con función dinámica ---
-const allowedOrigins = [/^http:\/\/localhost:\d{4}$/, /^https:\/\/.*\.netlify\.app$/]
+const allowedOrigins = [
+    /^http:\/\/localhost:\d{4}$/,
+    /^https:\/\/.*\.netlify\.app$/,
+    /^https:\/\/.*\.vercel\.app$/, // Lo dejamos por las dudas
+    /^https:\/\/crisol-backend\.onrender\.com$/, // La propia URL del backend
+]
 const corsOptions = {
     origin: (origin, callback) => {
         // --- DEBUGGING ---
