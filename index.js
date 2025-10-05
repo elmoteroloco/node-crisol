@@ -28,6 +28,10 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
+// --- Configuración de CORS ---
+// Esta es la configuración correcta y simplificada.
+// El middleware `cors` con una función `origin` maneja
+// automáticamente las peticiones de pre-vuelo (OPTIONS).
 const allowedOrigins = [
     /^http:\/\/localhost:\d{4}$/,
     /^https:\/\/.*\.netlify\.app$/,
@@ -51,11 +55,8 @@ const corsOptions = {
     credentials: true,
 }
 
-// 1. Habilitar y responder a TODAS las peticiones de pre-vuelo (OPTIONS)
-app.options("*", cors())
-
-// 2. Luego, aplicar nuestra configuración de CORS más específica para las demás peticiones
 app.use(cors(corsOptions))
+// ----------------------------------------------------
 
 const verifyAdminToken = async (req, res, next) => {
     const authHeader = req.headers.authorization
