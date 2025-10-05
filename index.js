@@ -51,6 +51,10 @@ const corsOptions = {
     credentials: true,
 }
 
+// 1. Habilitar y responder a TODAS las peticiones de pre-vuelo (OPTIONS)
+app.options("*", cors())
+
+// 2. Luego, aplicar nuestra configuración de CORS más específica para las demás peticiones
 app.use(cors(corsOptions))
 
 const verifyAdminToken = async (req, res, next) => {
