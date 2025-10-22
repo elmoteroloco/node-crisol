@@ -29,9 +29,7 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 
 // --- Configuración de CORS ---
-// Esta es la configuración correcta y simplificada.
-// El middleware `cors` con una función `origin` maneja
-// automáticamente las peticiones de pre-vuelo (OPTIONS).
+
 const allowedOrigins = [
     /^http:\/\/localhost:\d{4}$/,
     /^https:\/\/.*\.netlify\.app$/,
